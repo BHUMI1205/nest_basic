@@ -14,6 +14,4 @@ export class CreateProductDto {
   @IsNotEmpty()
   detail: string;
 
-  // @IsNotEmpty()
-  image: string; 
 }

@@ -4,4 +4,5 @@ export interface product extends Document {
   price: number;
   detail: string;
   image: string;
+  publicId: string;
 }

@@ -2,7 +2,7 @@ import { Body, Controller, HttpStatus, Post, Res } from '@nestjs/common';
 import { UserService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiBody, ApiConsumes } from '@nestjs/swagger';
 
 @ApiTags('users')
 @Controller('users')
@@ -10,6 +10,18 @@ export class UsersController {
     constructor(private userService: UserService) { }
 
     @Post('/register')
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string' },
+                email: { type: 'string' },
+                password: { type: 'string' },
+                cpassword: { type: 'string' }
+            },
+        },
+    })
     async register(@Res() res, @Body() createUserDto: CreateUserDto) {
         try {
             const user = await this.userService.register(createUserDto);
@@ -30,6 +42,15 @@ export class UsersController {
     }
 
     @Post('login')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                email: { type: 'string' },
+                password: { type: 'string' },
+            },
+        },
+    })
     async login(@Res() res, @Body() loginUserDto: LoginUserDto) {
         try {
             const token = await this.userService.login(loginUserDto);
@@ -41,6 +62,7 @@ export class UsersController {
             });
         }
         catch (err) {
+            console.log(err);
             return res.status(HttpStatus.BAD_REQUEST).json({
                 statusCode: HttpStatus.BAD_REQUEST,
                 message: err.message,
