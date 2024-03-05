@@ -22,6 +22,11 @@ describe('ProductService', () => {
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(service.create).toBeDefined();
+    expect(service.getAll).toBeDefined();
+    expect(service.getProduct).toBeDefined();
+    expect(service.updateProduct).toBeDefined();
+    expect(service.updateProductImage).toBeDefined();
+    expect(service.deleteProduct).toBeDefined();
   });
 });

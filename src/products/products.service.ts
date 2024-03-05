@@ -8,16 +8,40 @@ import { ProductSchema } from './schema/product.schema';
 import toStream = require('buffer-to-stream');
 import * as cloudinary from 'cloudinary';
 import { Readable } from 'stream';
+import * as mongoose from 'mongoose';
 
-@Injectable() 
+@Injectable()
 export class ProductService {
     constructor(@InjectModel('product') private ProductSchema: Model<product>) {
         cloudinary.v2.config({
             cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
             api_key: process.env.CLOUDINARY_API_KEY,
             api_secret: process.env.CLOUDINARY_API_SECRET,
-        }); 
-    } 
+        });
+    }
+
+    private uploadImageToCloudinary(fileBuffer: Buffer): Promise<cloudinary.UploadApiResponse> {
+        try {
+            return new Promise((resolve, reject) => {
+                const publicId = Date.now() + Math.floor(Math.random() * 1000000).toString();
+
+                cloudinary.v2.uploader.upload_stream(
+                    { public_id: publicId, resource_type: 'auto', folder: 'nest_basic/productImages', },
+                    (error: cloudinary.UploadApiErrorResponse, result: cloudinary.UploadApiResponse) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(result);
+                        }
+                    }
+                ).end(fileBuffer);
+            });
+        }
+        catch (err) {
+            console.log(err);
+            throw err;
+        }
+    }
 
     async create(createProductDto: CreateProductDto, fileBuffers: Buffer[]): Promise<product> {
         try {
@@ -42,77 +66,60 @@ export class ProductService {
 
             return newProduct.save();
         } catch (error) {
-            
+
             throw new Error("Error creating product");
         }
     }
 
+    async getAll(): Promise<{ products: product[] }[]> {
+        const aggregatedProducts = await this.ProductSchema.aggregate([
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'categoryId',
+                    foreignField: '_id',
+                    as: 'categoryData'
+                }
+            },
+            {
+                $group: {
+                    _id: "$category",
+                    categoryData: { $first: "$categoryData" },
+                    products: { $push: "$$ROOT" }
+                }
+            }
+        ]).exec();
 
-    private uploadImageToCloudinary(fileBuffer: Buffer): Promise<cloudinary.UploadApiResponse> {
-        try {
-            return new Promise((resolve, reject) => {
-                cloudinary.v2.uploader.upload_stream(
-                    { resource_type: 'auto', folder: 'nest_basic/images' },
-                    (error: cloudinary.UploadApiErrorResponse, result: cloudinary.UploadApiResponse) => {
-                        if (error) {
-                            reject(error);
-                        } else {
-                            resolve(result);
-                        }
-                    }
-                ).end(fileBuffer);
-            });
+        if (!aggregatedProducts || aggregatedProducts.length === 0) {
+            throw new NotFoundException('No products found!');
         }
-        catch (err) {
-            console.log(err);
-            throw err;
-        }
+
+        return aggregatedProducts.map(({ products }) => ({
+            products: products
+        }));
     }
+    async getProduct(Id: string): Promise<{ product: product; }> {
+        const aggregatedProduct = await this.ProductSchema.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(Id) }
+            },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'categoryId',
+                    foreignField: '_id',
+                    as: 'categoryData'
+                }
+            }
+        ]).exec();
 
-
-    async getAll(): Promise<product[]> {
-        const productData = await this.ProductSchema.find();
-        if (!productData || productData.length == 0) {
-            throw new NotFoundException('Product data not found!');
-        }
-        return productData;
-    }
-
-    async getProduct(Id: string): Promise<product> {
-        const existingProduct = await this.ProductSchema.findById(Id).exec();
-        if (!existingProduct) {
+        if (!aggregatedProduct || aggregatedProduct.length === 0) {
             throw new NotFoundException(`Product #${Id} not found`);
         }
-        return existingProduct;
+
+        return { product: aggregatedProduct[0] };
     }
 
-    // async updateProductImage(Id: string, imageData: Buffer, updateProductDto: UpdateProductDto): Promise<product> {
-    //     try {
-    //         const deletedProduct = await this.ProductSchema.findById(Id);
-
-    //         if (!deletedProduct) {
-    //             throw new NotFoundException(`Product with ID ${Id} not found`);
-    //         }
-
-    //         await cloudinary.v2.uploader.destroy(deletedProduct.publicId);
-
-    //         const result = await this.uploadImageToCloudinary(imageData);
-
-    //         const image = result.url;
-    //         const publicId = result.public_id;
-
-    //         const updatedProduct = await this.ProductSchema.findByIdAndUpdate(
-    //             Id,
-    //             { ...updateProductDto, image: image, publicId: publicId },
-    //             { new: true }
-    //         );
-
-    //         return updatedProduct;
-    //     } catch (error) {
-    //         console.error("Error updating product image:", error);
-    //         throw error;
-    //     }
-    // }
 
     async updateProductImage(Id: string, imageData: Buffer[], updateProductDto: UpdateProductDto): Promise<product> {
         try {
@@ -158,7 +165,6 @@ export class ProductService {
         }
     }
 
-
     async updateProduct(Id: string, updateProductDto: UpdateProductDto): Promise<product> {
         try {
             const existingProduct = await this.ProductSchema.findByIdAndUpdate(Id, updateProductDto, { new: true });
@@ -190,3 +196,48 @@ export class ProductService {
         return deletedProduct;
     }
 }
+
+
+// async getAll(): Promise<product[]> {
+//     const productData = await this.ProductSchema.find();
+//     if (!productData || productData.length == 0) {
+//         throw new NotFoundException('Product data not found!');
+//     }
+//     return productData;
+// }
+
+// async getProduct(Id: string): Promise<product> {
+//     const existingProduct = await this.ProductSchema.findById(Id).exec();
+//     if (!existingProduct) {
+//         throw new NotFoundException(`Product #${Id} not found`);
+//     }
+//     return existingProduct;
+// }
+
+// async updateProductImage(Id: string, imageData: Buffer, updateProductDto: UpdateProductDto): Promise<product> {
+//     try {
+//         const deletedProduct = await this.ProductSchema.findById(Id);
+
+//         if (!deletedProduct) {
+//             throw new NotFoundException(`Product with ID ${Id} not found`);
+//         }
+
+//         await cloudinary.v2.uploader.destroy(deletedProduct.publicId);
+
+//         const result = await this.uploadImageToCloudinary(imageData);
+
+//         const image = result.url;
+//         const publicId = result.public_id;
+
+//         const updatedProduct = await this.ProductSchema.findByIdAndUpdate(
+//             Id,
+//             { ...updateProductDto, image: image, publicId: publicId },
+//             { new: true }
+//         );
+
+//         return updatedProduct;
+//     } catch (error) {
+//         console.error("Error updating product image:", error);
+//         throw error;
+//     }
+// }

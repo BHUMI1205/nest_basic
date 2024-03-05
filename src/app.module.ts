@@ -9,6 +9,9 @@ import { AuthMiddleware } from './auth/auth.middleware';
 import { SocketGateway } from './socket/socket.gateway';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { CategoryService } from './category/category.service';
+import { CategoryModule } from './category/category.module';
+import { CategoryController } from './category/category.controller';
 
 @Module({
   controllers: [AppController],
@@ -17,7 +20,8 @@ import { JwtModule } from '@nestjs/jwt';
     JwtModule.register({
       secret: 'logindata',
       signOptions: { expiresIn: '1h' },
-    })
+    }),
+    CategoryModule
   ],
 })
 
@@ -25,6 +29,6 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
-      .forRoutes(ProductsController);
+      .forRoutes(ProductsController,CategoryController);
   }
 }

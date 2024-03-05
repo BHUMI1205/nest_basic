@@ -22,7 +22,11 @@ describe('ProductsController', () => {
   });
 
   it('should be defined', () => {
-    expect(controller).toBeDefined();
+    expect(controller.create).toBeDefined();
+    expect(controller.getproduct).toBeDefined();
+    expect(controller.getproducts).toBeDefined();
+    expect(controller.deleteProduct).toBeDefined();
+    expect(controller.updateProduct).toBeDefined();
   });
 });
 

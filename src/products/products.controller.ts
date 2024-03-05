@@ -1,15 +1,10 @@
-import { Body, UseInterceptors, UploadedFile, UploadedFiles, Controller, Delete, Get, HttpStatus, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, UseInterceptors, UploadedFiles, Controller, Delete, Get, HttpStatus, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
 import { ProductService } from './products.service';
 import { CreateProductDto } from './dto/create-products.dto';
 import { UpdateProductDto } from './dto/update-products.dto';
 import { AuthMiddleware } from '../auth/auth.middleware';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
-import { extname } from 'path';
-import { product } from './interfaces/products.interface'
-import { Multer } from 'multer'
-import { request } from 'express';
 
 @ApiBearerAuth()
 @ApiTags('Products')
@@ -85,6 +80,7 @@ export class ProductsController {
             properties: {
                 name: { type: 'string' },
                 detail: { type: 'string' },
+                categoryId: { type: 'string' },
                 price: { type: 'integer' },
                 image: {
                     type: 'string',
@@ -94,7 +90,6 @@ export class ProductsController {
         },
     })
 
-    // @UseInterceptors(FileInterceptor('image'))
     @UseInterceptors(FilesInterceptor('image'))
 
     async create(@Req() req, @Res() res, @Body() createProductDto: CreateProductDto, @UploadedFiles() images: Array<Express.Multer.File>) {
@@ -107,7 +102,7 @@ export class ProductsController {
                 newProduct
             });
         } catch (err) {
-            
+
             return res.status(HttpStatus.BAD_REQUEST).json({
                 statusCode: 400,
                 message: 'Error: Product image(s) not uploaded!',
