@@ -6,7 +6,7 @@ import { CreateProductDto } from './dto/create-products.dto'
 import { UpdateProductDto } from './dto/update-products.dto'
 import { ProductSchema } from './schema/product.schema';
 import toStream = require('buffer-to-stream');
-import * as cloudinary from 'cloudinary';
+import * as cloudinary from 'cloudinary';   
 import { Readable } from 'stream';
 import * as mongoose from 'mongoose';
 
