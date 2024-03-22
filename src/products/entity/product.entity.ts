@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, {now, Document} from "mongoose";
-import { Category } from 'src/category/schema/category.schema';
+import { Category } from 'src/category/entity/category.entity';
 
 @Schema()
 export class Product extends Document {

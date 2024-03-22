@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProductService } from './products.service';
 import { ProductsController } from '../products/products.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ProductSchema } from './schema/product.schema';
+import { ProductSchema } from './entity/product.entity';
 import { JwtService } from '@nestjs/jwt'
 
 describe('ProductService', () => {

@@ -6,13 +6,13 @@ import { LoggerFactory } from './common/LoggerFactory';
 import { ConfigModule } from '@nestjs/config';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
-
+import { HttpExceptionFilter } from './common/exception.filter';
 
 ConfigModule.forRoot()
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: LoggerFactory('MyApp'),
+    // logger: LoggerFactory('MyApp'),
   });
 
 
@@ -29,7 +29,8 @@ async function bootstrap() {
 
   SwaggerModule.setup('api', app, document);
   app.useGlobalPipes(new ValidationPipe());
-
+  // app.useGlobalFilters(new HttpExceptionFilter());
+  
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('hbs');

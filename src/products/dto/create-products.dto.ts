@@ -1,17 +1,20 @@
 import { IsNotEmpty, IsNumber, IsString, MaxLength } from "class-validator";
-import { Multer } from 'multer';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class CreateProductDto {
   @IsString()
   @MaxLength(30)
   @IsNotEmpty()
+  @ApiProperty()
   name: string;
 
   // @IsNumber()
   // @IsNotEmpty()
+  @ApiProperty()
   price: number;
 
   @IsNotEmpty()
+  @ApiProperty()
   detail: string;
 
 }

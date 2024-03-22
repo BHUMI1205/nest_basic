@@ -1,22 +1,27 @@
-import { Body, UseInterceptors, UploadedFiles, Controller, Delete, Get, HttpStatus, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, UseInterceptors, UploadedFiles, Logger, Controller, Delete, Get, HttpStatus, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
 import { ProductService } from './products.service';
 import { CreateProductDto } from './dto/create-products.dto';
 import { UpdateProductDto } from './dto/update-products.dto';
 import { AuthMiddleware } from '../auth/auth.middleware';
+import { RoleAuthMiddleware } from '../auth/role.auth';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiConsumes, ApiBody, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { request } from 'http';
 
 @ApiBearerAuth()
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
-    constructor(private productService: ProductService) { }
+    constructor(private productService: ProductService,
+    ) { }
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware, RoleAuthMiddleware)
+    @ApiOperation({ summary: 'Find all product details' })
     @Get()
-    async getproducts(@Res() response) {
+    async getproducts(@Res() response, @Req() request) {
         try {
             const productData = await this.productService.getAll();
+            Logger.log('All Products data found successfully')
             return response.status(HttpStatus.OK).json({
                 message: 'All Products data found successfully', productData,
             });
@@ -25,7 +30,7 @@ export class ProductsController {
         }
     }
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware, RoleAuthMiddleware)
     @Get('/:id')
     async getproduct(@Res() response, @Param('id') Id: string) {
         try {
@@ -71,7 +76,7 @@ export class ProductsController {
     // }
 
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware, RoleAuthMiddleware)
     @Post()
     @ApiConsumes('multipart/form-data')
     @ApiBody({
@@ -96,22 +101,23 @@ export class ProductsController {
         try {
             const fileBuffers = images.map(image => image.buffer);
             const newProduct = await this.productService.create(createProductDto, fileBuffers);
+            Logger.log('Product have been uploaded Successfully')
 
             return res.status(HttpStatus.CREATED).json({
-                message: 'Product image(s) have been uploaded to Cloudinary',
+                message: 'Product have been uploaded Successfully',
                 newProduct
             });
         } catch (err) {
 
             return res.status(HttpStatus.BAD_REQUEST).json({
                 statusCode: 400,
-                message: 'Error: Product image(s) not uploaded!',
+                message: 'Error: Product not uploaded!',
                 error: err.message
             });
         }
     }
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware, RoleAuthMiddleware)
     @Put('/:id')
     @ApiConsumes('multipart/form-data')
     @ApiBody({
@@ -155,7 +161,7 @@ export class ProductsController {
         }
     }
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware, RoleAuthMiddleware)
     @Delete('/:id')
     async deleteProduct(@Res() response, @Param('id') Id: string) {
         try {

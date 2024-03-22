@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UserService } from './users.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UserSchema } from './schema/users.schema';
+import { UserSchema } from './entity/users.schema';
 import { JwtModule } from '@nestjs/jwt';
 
 describe('UsersController', () => {

@@ -5,7 +5,7 @@ import { category } from './interfaces/category.interface';
 import * as cloudinary from 'cloudinary';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CategorySchema } from './schema/category.schema';
+import { CategorySchema } from './entity/category.entity';
 
 
 
@@ -21,11 +21,11 @@ export class CategoryService {
     }
 
     async getAll(): Promise<category[]> {
-        const CtegoryData = await this.CategorySchema.find();
-        if (!CtegoryData || CtegoryData.length == 0) {
+        const CategoryData = await this.CategorySchema.find();
+        if (!CategoryData || CategoryData.length == 0) {
             throw new NotFoundException('Category data not found!');
-        }
-        return CtegoryData;
+        }        
+        return CategoryData;
     }
 
     async getCategory(Id: string): Promise<category> {

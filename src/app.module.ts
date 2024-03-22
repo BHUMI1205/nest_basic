@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer, Logger } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,6 +11,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { CategoryModule } from './category/category.module';
 import { CategoryController } from './category/category.controller';
 import { GatewayModule } from './gateway/gateway.module';
+import { CartController } from './cart/cart.controller';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   controllers: [AppController],
@@ -21,14 +23,15 @@ import { GatewayModule } from './gateway/gateway.module';
       signOptions: { expiresIn: '1h' },
     }),
     CategoryModule,
-    GatewayModule
+    GatewayModule,
+    CartModule
   ],
 })
 
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(AuthMiddleware,LoggerMiddleware)
-      .forRoutes(ProductsController,CategoryController);
+      .apply(AuthMiddleware, LoggerMiddleware)
+      .forRoutes(ProductsController, CategoryController);
   }
 }

@@ -4,7 +4,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { product } from './interfaces/products.interface';
 import { CreateProductDto } from './dto/create-products.dto'
 import { UpdateProductDto } from './dto/update-products.dto'
-import { ProductSchema } from './schema/product.schema';
+import { ProductSchema } from './entity/product.entity';
 import toStream = require('buffer-to-stream');
 import * as cloudinary from 'cloudinary';   
 import { Readable } from 'stream';

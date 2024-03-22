@@ -2,6 +2,7 @@ import { Controller, HttpStatus, Body, Req, Res, Param, Get, Post,Put, Delete, U
 import { CategoryService } from './category.service';;
 import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AuthMiddleware } from '../auth/auth.middleware';
+import { RoleAuthMiddleware } from '../auth/role.auth';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -12,11 +13,12 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 export class CategoryController {
     constructor(private categoryService: CategoryService) { }
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware,RoleAuthMiddleware)
     @Get()
     async getproducts(@Res() response) {
         try {
             const productData = await this.categoryService.getAll();
+            
             return response.status(HttpStatus.OK).json({
                 message: 'All Category data found successfully', productData,
             });
@@ -25,7 +27,7 @@ export class CategoryController {
         }
     }
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware,RoleAuthMiddleware)
     @Get('/:id')
     async getCategory(@Res() response, @Param('id') Id: string) {
         try {
@@ -38,7 +40,7 @@ export class CategoryController {
         }
     }
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware,RoleAuthMiddleware)
     @Post()
     @ApiConsumes('multipart/form-data')
     @ApiBody({
@@ -76,7 +78,7 @@ export class CategoryController {
     }
 
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware,RoleAuthMiddleware)
     @Put('/:id')
     @ApiConsumes('multipart/form-data')
     @ApiBody({
@@ -118,7 +120,7 @@ export class CategoryController {
         }
     }
 
-    @UseGuards(AuthMiddleware)
+    @UseGuards(AuthMiddleware,RoleAuthMiddleware)
     @Delete('/:id')
     async deleteCategory(@Res() response, @Param('id') Id: string) {
         try {

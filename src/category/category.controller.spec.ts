@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CategoryController } from './category.controller';
 import { CategoryService } from './category.service';
-import { CategorySchema } from './schema/category.schema';
+import { CategorySchema } from './entity/category.entity';
 import { MongooseModule } from "@nestjs/mongoose";
 import { JwtService } from '@nestjs/jwt'
 

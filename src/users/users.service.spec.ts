@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './users.service';
 import { UsersController } from '../users/users.controller';
-import { UserSchema } from './schema/users.schema';
+import { UserSchema } from './entity/users.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 

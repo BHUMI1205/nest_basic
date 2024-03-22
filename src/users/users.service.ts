@@ -4,7 +4,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { user } from './interfaces/users.interfaces';
 import { CreateUserDto } from "./dto/create-user.dto";
 import { LoginUserDto } from "./dto/login-user.dto";
-import { UserSchema } from "./schema/users.schema";
+import { UserSchema } from "./entity/users.entity";
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
@@ -38,13 +38,14 @@ export class UserService {
     async login(loginUserDto: LoginUserDto): Promise<{ token: string }> {
 
         const existingUser = await this.UserSchema.findOne({ email: loginUserDto.email });
+        
         if (existingUser) {
             const isMatch = await bcrypt.compare(loginUserDto.password, existingUser.password);
             if (isMatch) {
-                const payload = { email: existingUser.email, sub: existingUser._id };
-                
+                const payload = { email: existingUser.email, id: existingUser._id , role: existingUser.role };
+
                 let token = this.jwtService.sign(payload);
-                
+
                 return { token }
                 // const user = new this.UserSchema();
                 // return user.save();

@@ -7,13 +7,19 @@ export class AppController {
     private readonly appService: AppService
   ) { }
 
-  // @Get()
-  // getHello(): string {
-  //   return this.appService.getHello();
-  // }
+  @Get()
+  getHello(): string {
+    return this.appService.getHello();
+  }
 
   @Get('pages')
   @Render('index.hbs')
   root() {
+    return { message: 'Hello world!' };
   }
+
+  // @Get('pages')
+  // @Render('index.hbs')
+  // root() {
+  // }
 }
