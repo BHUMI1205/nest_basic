@@ -1,61 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from "mongoose";
 import { category } from './interfaces/category.interface';
 import * as cloudinary from 'cloudinary';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CategorySchema } from './entity/category.entity';
-
 
 
 @Injectable()
 export class CategoryService {
 
-    constructor(@InjectModel('category') private CategorySchema: Model<category>) {
+    constructor(@InjectModel('category') private CategoryModel: Model<category>) {
         cloudinary.v2.config({
             cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
             api_key: process.env.CLOUDINARY_API_KEY,
             api_secret: process.env.CLOUDINARY_API_SECRET,
         });
     }
-
-    async getAll(): Promise<category[]> {
-        const CategoryData = await this.CategorySchema.find();
-        if (!CategoryData || CategoryData.length == 0) {
-            throw new NotFoundException('Category data not found!');
-        }        
-        return CategoryData;
-    }
-
-    async getCategory(Id: string): Promise<category> {
-        const existingProduct = await this.CategorySchema.findById(Id).exec();
-        if (!existingProduct) {
-            throw new NotFoundException(`Product #${Id} not found`);
-        }
-        return existingProduct;
-    }
-
-    async create(createCategoryDto: CreateCategoryDto, imageData: Buffer): Promise<category> {
-        try {
-
-            const result = await this.uploadImageToCloudinary(imageData);
-            const imageUrl = result.url;
-            const publicId = result.public_id;
-
-            const newCategory = new this.CategorySchema({
-                ...createCategoryDto,
-                image: imageUrl,
-                publicId: publicId
-            });
-
-            return newCategory.save();
-        } catch (error) {
-
-            throw new Error("Error creating Ctegory");
-        }
-    }
-
     private uploadImageToCloudinary(fileBuffer: Buffer): Promise<cloudinary.UploadApiResponse> {
         try {
             return new Promise((resolve, reject) => {
@@ -78,63 +39,124 @@ export class CategoryService {
         }
     }
 
-    
-    async updateCategoryImage(Id: string, imageData: Buffer, updateCategoryDto: UpdateCategoryDto): Promise<category> {
-        try {
-            const deletedCategory = await this.CategorySchema.findById(Id);
 
-            if (!deletedCategory) {
-                throw new NotFoundException(`Category with ID ${Id} not found`);
+    async getAll(res, filterCategoryDto) {
+        let data: any;
+
+        if (filterCategoryDto.search) {
+            const searchRegex = await new RegExp(filterCategoryDto.search, 'i'); // 'i' for case-insensitive search
+
+            data = await this.CategoryModel.find({ $or: [{ name: { $regex: searchRegex } }, { detail: { $regex: searchRegex } }] })
+            // }
+            // else if (!data || data.length == 0) {
+            // throw new NotFoundException('Category data not found!');
+            if (data != "") {
+                return res.status(HttpStatus.OK).json({
+                    status: HttpStatus.OK,
+                    message: 'All Category data found successfully',
+                    data: data
+                });
+            } else {
+                return res.status(HttpStatus.OK).json({
+                    status: HttpStatus.OK,
+                    message: 'Searched Category data not found',
+                });
             }
-
-            await cloudinary.v2.uploader.destroy(deletedCategory.publicId);
-
-            const result = await this.uploadImageToCloudinary(imageData);
-
-            const image = result.url;
-            const publicId = result.public_id;
-
-            const updatedCategory = await this.CategorySchema.findByIdAndUpdate(
-                Id,
-                { ...updateCategoryDto, image: image, publicId: publicId },
-                { new: true }
-            );
-
-            return updatedCategory;
-        } catch (error) {
-            console.error("Error updating category image:", error);
-            throw error;
+        } else {
+            data = await this.CategoryModel.find({});
+            return res.status(HttpStatus.OK).json({
+                status: HttpStatus.OK,
+                message: 'All Category data found successfully',
+                data: data
+            });
         }
     }
 
-    async updateCategory(Id: string, updateCategoryDto: UpdateCategoryDto): Promise<category> {
-        try {
-            const existingCategory = await this.CategorySchema.findByIdAndUpdate(Id, updateCategoryDto, { new: true });
-
-            if (!existingCategory) {
-                throw new NotFoundException(`Category #${Id} not found`);
-            }
-            return existingCategory;
+    async getCategory(Id: string, res) {
+        const data = await this.CategoryModel.findById(Id).exec();
+        if (!data) {
+            throw new NotFoundException(`Product #${Id} not found`);
         }
-
-        catch (err) {
-            console.log(err);
-            throw err;
-        }
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'Category data found successfully',
+            data: data,
+        });
     }
 
+    async create(createCategoryDto: CreateCategoryDto, imageData: Buffer, res) {
+        const result = await this.uploadImageToCloudinary(imageData);
+        const imageUrl = result.url;
+        const publicId = result.public_id;
 
-    async deleteCategory(Id: string): Promise<category> {
+        const data = new this.CategoryModel({
+            ...createCategoryDto,
+            image: imageUrl,
+            publicId: publicId
+        });
 
-        const deletedCategory = await this.CategorySchema.findByIdAndDelete(Id);
+        return res.status(HttpStatus.CREATED).json({
+            status: HttpStatus.CREATED,
+            message: 'Category Added',
+            data: data.save(),
+        });
+    }
 
-        let image = deletedCategory.publicId
+    async updateCategoryImage(Id: string, imageData: Buffer, updateCategoryDto: UpdateCategoryDto, res) {
+        const deletedCategory = await this.CategoryModel.findById(Id);
+
+        if (!deletedCategory) {
+            throw new NotFoundException(`Category with ID ${Id} not found`);
+        }
+
+        await cloudinary.v2.uploader.destroy(deletedCategory.publicId);
+
+        const result = await this.uploadImageToCloudinary(imageData);
+
+        const image = result.url;
+        const publicId = result.public_id;
+
+        const data = await this.CategoryModel.findByIdAndUpdate(
+            Id,
+            { ...updateCategoryDto, image: image, publicId: publicId },
+            { new: true }
+        );
+
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'Product has been updated successfully',
+            data: data,
+        });
+    }
+
+    async updateCategory(Id: string, updateCategoryDto: UpdateCategoryDto, res) {
+        const data = await this.CategoryModel.findByIdAndUpdate(Id, updateCategoryDto, { new: true });
+
+        if (!data) {
+            throw new NotFoundException(`Category #${Id} not found`);
+        }
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'Product has been updated successfully',
+            data: data,
+        });
+    }
+
+    async deleteCategory(Id: string, res) {
+
+        const data = await this.CategoryModel.findByIdAndDelete(Id);
+
+        let image = data.publicId
 
         cloudinary.v2.uploader.destroy(image);
 
-        if (!deletedCategory) {
+        if (!data) {
             throw new NotFoundException(`Category #${Id} not found`);
         }
-        return deletedCategory;
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'Category deleted successfully',
+            data: data,
+        });
     }
 }

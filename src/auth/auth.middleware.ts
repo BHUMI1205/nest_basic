@@ -5,6 +5,7 @@ import { user } from '../users/interfaces/users.interfaces';
 import { TokenExpiredError } from 'jsonwebtoken'; 
 
 @Injectable()
+
 export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly jwtService: JwtService) { }
 
@@ -21,7 +22,8 @@ export class AuthMiddleware implements NestMiddleware {
         
         const decoded = await this.jwtService.verifyAsync(token);
         req.user = decoded as user;
-        next();
+        
+        next(); 
       }
     } catch (error) { 
       if (error instanceof TokenExpiredError) {

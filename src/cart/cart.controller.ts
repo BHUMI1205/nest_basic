@@ -1,34 +1,34 @@
-import { Body, Controller, Post, Req, Res, UseGuards, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Delete, Req, Res, UseGuards, Param, HttpStatus } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthMiddleware } from 'src/auth/auth.middleware';
-import { RoleAuthMiddleware } from 'src/auth/role.auth';
-import { CreateCartProductDto } from './dto/add-cartProduct.dto';
+import { AuthMiddleware } from '../auth/auth.middleware';
+import { response } from 'express';
+
 
 @ApiBearerAuth()
 @ApiTags('cart')
 @Controller('cart')
+
 export class CartController {
     constructor(private cartService: CartService) { }
 
-    @UseGuards(AuthMiddleware, RoleAuthMiddleware)
-    @ApiOperation({ summary: 'Add product to Cart' })
-    @Post()
-    async add(@Req() req, @Res() res, @Body() createCartProductDto: CreateCartProductDto) {
-        
-        try {
-            const newProduct = await this.cartService.add(createCartProductDto, req);
-            
-            return res.status(HttpStatus.CREATED).json({
-                message: 'Product has been Added to cart successfully',
-                newProduct,
-            });
-        } catch (err) {
-            return res.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: 400,
-                message: 'Error: Product not added to Cart!',
-                error: 'Bad Request'
-            });
-        }
+    @UseGuards(AuthMiddleware)
+    @Get('/:id')
+    async add(@Req() req, @Res() response, @Param('id') productId: string) {
+        const id = req.user.id
+        return await this.cartService.add(productId, id, response);
+    }
+
+
+    @UseGuards(AuthMiddleware)
+    @Delete('/:id')
+    async deleteProduct(@Res() response, @Param('id') Id: string) {
+        return await this.cartService.deleteProduct(Id, response);
+    }
+
+    @UseGuards(AuthMiddleware)
+    @Get()
+    async showCartProduct(@Res() response){
+        return await this.cartService.showCartProduct(response)
     }
 }

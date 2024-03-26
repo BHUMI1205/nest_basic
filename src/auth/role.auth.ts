@@ -1,7 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import { user } from '../users/interfaces/users.interfaces';
 import { TokenExpiredError } from 'jsonwebtoken';
 
 @Injectable()
@@ -12,7 +11,6 @@ export class RoleAuthMiddleware implements NestMiddleware {
 
         try {
             let role = req.user.role;
-            console.log(role);
             if (role == "admin") {
                 next();
             } else {

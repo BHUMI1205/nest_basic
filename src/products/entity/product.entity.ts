@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, {now, Document} from "mongoose";
+import mongoose, { now, Document } from "mongoose";
 import { Category } from 'src/category/entity/category.entity';
 
 @Schema()
@@ -13,8 +13,11 @@ export class Product extends Document {
    @Prop({ required: true })
    price: number;
 
-   @Prop({ref:'Category'})
-   categoryId : mongoose.Schema.Types.ObjectId
+   @Prop({ ref: 'Category' })
+   categoryId: mongoose.Schema.Types.ObjectId
+
+   @Prop({ ref: 'User' })
+   userId: mongoose.Schema.Types.ObjectId
 
    @Prop()
    image: string[]
@@ -22,10 +25,10 @@ export class Product extends Document {
    @Prop()
    publicId: string[]
 
-   @Prop({default: now()})
+   @Prop({ default: now() })
    createdAt: Date;
 
-   @Prop({default: now()})
+   @Prop({ default: now() })
    updatedAt: Date;
 }
 

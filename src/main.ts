@@ -2,18 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-import { LoggerFactory } from './common/LoggerFactory';
 import { ConfigModule } from '@nestjs/config';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { HttpExceptionFilter } from './common/exception.filter';
+import { HttpExceptionFilter } from './middleware/exception.filter';
 
 ConfigModule.forRoot()
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    // logger: LoggerFactory('MyApp'),
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
 
   const config = new DocumentBuilder()
@@ -30,11 +27,9 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
   app.useGlobalPipes(new ValidationPipe());
   // app.useGlobalFilters(new HttpExceptionFilter());
-  
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('hbs');
-  // app.use(logger);  global middleware
   await app.listen(3000);
 }
 bootstrap();  

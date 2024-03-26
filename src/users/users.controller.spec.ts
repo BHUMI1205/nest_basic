@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UserService } from './users.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UserSchema } from './entity/users.schema';
+import { Userschema } from './entity/users.entity';
 import { JwtModule } from '@nestjs/jwt';
 
 describe('UsersController', () => {
@@ -14,7 +14,7 @@ describe('UsersController', () => {
       providers: [UserService],
       imports: [
         MongooseModule.forRoot('mongodb://localhost:27017/nest_basic'),
-        MongooseModule.forFeature([{ name: 'user', schema: UserSchema }]),
+        MongooseModule.forFeature([{ name: 'user', schema: Userschema }]),
         JwtModule.register({
           secret: 'logindata',
           signOptions: { expiresIn: '1h' },

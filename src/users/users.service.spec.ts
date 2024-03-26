@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './users.service';
 import { UsersController } from '../users/users.controller';
-import { UserSchema } from './entity/users.schema';
+import { Userschema } from './entity/users.entity';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -14,7 +14,7 @@ describe('UserService', () => {
       providers: [UserService],
       imports: [
         MongooseModule.forRoot('mongodb://localhost:27017/nest_basic'),
-        MongooseModule.forFeature([{ name: 'user', schema: UserSchema }]),
+        MongooseModule.forFeature([{ name: 'user', schema: Userschema }]),
         JwtModule.register({
           secret: 'logindata',
           signOptions: { expiresIn: '1h' },

@@ -14,11 +14,11 @@ import { ProductSchema } from 'src/products/entity/product.entity';
     ProductsModule,
     MongooseModule.forRoot('mongodb://localhost:27017/nest_basic'),
     MongooseModule.forFeature([
-      { name: 'cart', schema: CartSchema }, 
-      { name: 'product', schema: ProductSchema }, 
+      { name: 'cart', schema: CartSchema },
+      { name: 'product', schema: ProductSchema },
     ]),
   ]
-})
+}) 
 export class CartModule {
 
 }

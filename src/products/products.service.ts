@@ -1,18 +1,15 @@
 import { Model } from "mongoose";
 import { InjectModel } from '@nestjs/mongoose';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, HttpStatus } from '@nestjs/common';
 import { product } from './interfaces/products.interface';
 import { CreateProductDto } from './dto/create-products.dto'
 import { UpdateProductDto } from './dto/update-products.dto'
-import { ProductSchema } from './entity/product.entity';
-import toStream = require('buffer-to-stream');
-import * as cloudinary from 'cloudinary';   
-import { Readable } from 'stream';
+import * as cloudinary from 'cloudinary';
 import * as mongoose from 'mongoose';
 
 @Injectable()
 export class ProductService {
-    constructor(@InjectModel('product') private ProductSchema: Model<product>) {
+    constructor(@InjectModel('product') private ProductModel: Model<product>) {
         cloudinary.v2.config({
             cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
             api_key: process.env.CLOUDINARY_API_KEY,
@@ -43,36 +40,37 @@ export class ProductService {
         }
     }
 
-    async create(createProductDto: CreateProductDto, fileBuffers: Buffer[]): Promise<product> {
-        try {
-            const uploadPromises = fileBuffers.map(fileBuffer => this.uploadImageToCloudinary(fileBuffer));
+    async create(createProductDto: CreateProductDto, fileBuffers: Buffer[], id, res) {
+        const uploadPromises = fileBuffers.map(fileBuffer => this.uploadImageToCloudinary(fileBuffer));
 
-            const uploadResults = await Promise.all(uploadPromises);
+        const uploadResults = await Promise.all(uploadPromises);
 
-            const imageUrl = [];
-            const publicId = [];
+        const imageUrl = [];
+        const publicId = [];
 
-            uploadResults.forEach(result => {
-                if (result.url && result.public_id) {
-                    imageUrl.push(result.url);
-                    publicId.push(result.public_id);
-                }
-            });
-            const newProduct = new this.ProductSchema({
-                ...createProductDto,
-                image: imageUrl,
-                publicId: publicId
-            });
+        uploadResults.forEach(result => {
+            if (result.url && result.public_id) {
+                imageUrl.push(result.url);
+                publicId.push(result.public_id);
+            }
+        });
+        const data = new this.ProductModel({
+            ...createProductDto,
+            image: imageUrl,
+            publicId: publicId,
+            userId: id
+        });
 
-            return newProduct.save();
-        } catch (error) {
 
-            throw new Error("Error creating product");
-        }
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'Product has been added successfully',
+            data: data
+        });
     }
 
-    async getAll(): Promise<{ products: product[] }[]> {
-        const aggregatedProducts = await this.ProductSchema.aggregate([
+    async getAll(res) {
+        const data = await this.ProductModel.aggregate([
             {
                 $lookup: {
                     from: 'categories',
@@ -82,24 +80,23 @@ export class ProductService {
                 }
             },
             {
-                $group: {
-                    _id: "$category",
-                    categoryData: { $first: "$categoryData" },
-                    products: { $push: "$$ROOT" }
-                }
-            }
+                $unwind: "$categoryData",
+            },
         ]).exec();
 
-        if (!aggregatedProducts || aggregatedProducts.length === 0) {
+        if (!data || data.length === 0) {
             throw new NotFoundException('No products found!');
         }
 
-        return aggregatedProducts.map(({ products }) => ({
-            products: products
-        }));
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'All Products data found successfully',
+            data: data
+        });
     }
-    async getProduct(Id: string): Promise<{ product: product; }> {
-        const aggregatedProduct = await this.ProductSchema.aggregate([
+
+    async getProduct(Id: string, res) {
+        const data = await this.ProductModel.aggregate([
             {
                 $match: { _id: new mongoose.Types.ObjectId(Id) }
             },
@@ -113,87 +110,86 @@ export class ProductService {
             }
         ]).exec();
 
-        if (!aggregatedProduct || aggregatedProduct.length === 0) {
+        if (!data || data.length === 0) {
             throw new NotFoundException(`Product #${Id} not found`);
         }
-
-        return { product: aggregatedProduct[0] };
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'Product found successfully',
+            data: data[0],
+        });
     }
 
+    async updateProductImage(Id: string, imageData: Buffer[], updateProductDto: UpdateProductDto, res) {
+        const deletedProduct = await this.ProductModel.findById(Id);
 
-    async updateProductImage(Id: string, imageData: Buffer[], updateProductDto: UpdateProductDto): Promise<product> {
-        try {
-            const deletedProduct = await this.ProductSchema.findById(Id);
-
-            if (!deletedProduct) {
-                throw new NotFoundException(`Product with ID ${Id} not found`);
-            }
-
-            let publicIds = deletedProduct.publicId
-
-            for (let i = 0; i < publicIds.length; i++) {
-                cloudinary.v2.uploader.destroy(publicIds[i]);
-            }
-
-            const uploadPromises = imageData.map(fileBuffer => this.uploadImageToCloudinary(fileBuffer));
-
-            const uploadResults = await Promise.all(uploadPromises);
-
-            const imageUrl = [];
-            const publicId = [];
-
-            uploadResults.forEach(result => {
-                if (result.url && result.public_id) {
-                    imageUrl.push(result.url);
-                    publicId.push(result.public_id);
-                }
-            });
-
-
-            const updatedProduct = await this.ProductSchema.findByIdAndUpdate(
-                Id,
-                { ...updateProductDto, image: imageUrl, publicId: publicId },
-                { new: true }
-            );
-
-
-            return updatedProduct.save();
-
-        } catch (error) {
-            console.error("Error updating product image:", error);
-            throw error;
+        if (!deletedProduct) {
+            throw new NotFoundException(`Product with ID ${Id} not found`);
         }
+
+        let publicIds = deletedProduct.publicId
+
+        for (let i = 0; i < publicIds.length; i++) {
+            cloudinary.v2.uploader.destroy(publicIds[i]);
+        }
+
+        const uploadPromises = imageData.map(fileBuffer => this.uploadImageToCloudinary(fileBuffer));
+
+        const uploadResults = await Promise.all(uploadPromises);
+
+        const imageUrl = [];
+        const publicId = [];
+
+        uploadResults.forEach(result => {
+            if (result.url && result.public_id) {
+                imageUrl.push(result.url);
+                publicId.push(result.public_id);
+            }
+        });
+
+        const data = await this.ProductModel.findByIdAndUpdate(
+            Id,
+            { ...updateProductDto, image: imageUrl, publicId: publicId },
+            { new: true }
+        );
+
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'Product has been updated successfully',
+            data: data.save(),
+        });
     }
 
-    async updateProduct(Id: string, updateProductDto: UpdateProductDto): Promise<product> {
-        try {
-            const existingProduct = await this.ProductSchema.findByIdAndUpdate(Id, updateProductDto, { new: true });
+    async updateProduct(Id: string, updateProductDto: UpdateProductDto, res) {
+        const data = await this.ProductModel.findByIdAndUpdate(Id, updateProductDto, { new: true });
 
-            if (!existingProduct) {
-                throw new NotFoundException(`Product #${Id} not found`);
-            }
-            return existingProduct;
+        if (!data) {
+            throw new NotFoundException(`Product #${Id} not found`);
         }
-
-        catch (err) {
-            console.log(err);
-            throw err;
-        }
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'Product has been updated successfully',
+            data: data,
+        });
     }
 
-    async deleteProduct(Id: string): Promise<product> {
-        const deletedProduct = await this.ProductSchema.findByIdAndDelete(Id);
+    async deleteProduct(Id: string, res) {
+        const data = await this.ProductModel.findByIdAndDelete(Id);
 
-        let image = deletedProduct.publicId
+        let image = data.publicId
 
         for (let i = 0; i < image.length; i++) {
             cloudinary.v2.uploader.destroy(image[i]);
         }
 
-        if (!deletedProduct) {
+        if (!data) {
             throw new NotFoundException(`Product #${Id} not found`);
         }
-        return deletedProduct;
+        return res.status(HttpStatus.OK).json({
+            status: HttpStatus.OK,
+            message: 'Product deleted successfully',
+            data: data,
+        });
     }
 }
 
