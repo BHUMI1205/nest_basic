@@ -14,14 +14,15 @@ export class ProductsController {
     ) { }
 
     @UseGuards(AuthMiddleware)
-    @ApiOperation({ summary: 'Find all product details' })
+    @ApiOperation({ summary: 'Find all product Details' })
     @Get()
-    async getproducts(@Res() response ) {
+    async getproducts(@Res() response) {
         return await this.productService.getAll(response);
     }
 
 
     @UseGuards(AuthMiddleware)
+    @ApiOperation({ summary: 'Show product Details By Id' })
     @Get('/:id')
     async getproduct(@Res() response, @Param('id') Id: string) {
         return await this.productService.getProduct(Id, response);
@@ -30,22 +31,9 @@ export class ProductsController {
 
     @UseGuards(AuthMiddleware)
     @Post()
+    @ApiOperation({ summary: 'Add new product' })
+    @ApiBody({ type: CreateProductDto })
     @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                name: { type: 'string' },
-                detail: { type: 'string' },
-                categoryId: { type: 'string' },
-                price: { type: 'integer' },
-                image: {
-                    type: 'string',
-                    format: 'binary',
-                },
-            },
-        },
-    })
     @UseInterceptors(FilesInterceptor('image'))
     async create(@Req() req, @Res() response, @Body() createProductDto: CreateProductDto, @UploadedFiles() images: Array<Express.Multer.File>) {
         const id = req.user.id
@@ -56,21 +44,9 @@ export class ProductsController {
 
     @UseGuards(AuthMiddleware)
     @Put('/:id')
+    @ApiOperation({ summary: 'Update product' })
     @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                name: { type: 'string' },
-                detail: { type: 'string' },
-                price: { type: 'integer' },
-                image: {
-                    type: 'string',
-                    format: 'binary',
-                },
-            },
-        },
-    })
+    @ApiBody({ type: UpdateProductDto, required: false })
     @UseInterceptors(FilesInterceptor('image'))
     async updateProduct(@Res() response, @Param('id') Id: string,
         @Body() updateProductDto: UpdateProductDto, @UploadedFiles() image: Array<Express.Multer.File>) {
@@ -85,6 +61,8 @@ export class ProductsController {
 
     @UseGuards(AuthMiddleware)
     @Delete('/:id')
+    @ApiOperation({ summary: 'Delete product' })
+    @ApiBody({ type: UpdateProductDto })
     async deleteProduct(@Res() response, @Param('id') Id: string) {
         return await this.productService.deleteProduct(Id, response);
     }

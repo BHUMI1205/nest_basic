@@ -1,5 +1,5 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
-import { Model } from "mongoose";
+import mongoose, { Model } from "mongoose";
 import { InjectModel } from '@nestjs/mongoose';
 import { cart } from './interface/cart.interface';
 import { product } from '../products/interfaces/products.interface'
@@ -11,13 +11,13 @@ export class CartService {
         @InjectModel('product') private ProductModel: Model<product>,
     ) { }
 
-    async add(productId: string, id, res) {
+    async add(productId: string, id: string, res) {
         const product = await this.ProductModel.findOne({
             _id: productId,
         });
 
         if (product) {
-            const data = this.CartModel.create({
+            const data = await this.CartModel.create({
                 productId: product._id,
                 userId: id
             });
@@ -45,13 +45,100 @@ export class CartService {
         });
     }
 
-    async showCartProduct(res) {
-        const data = await this.CartModel.find({})
+    async showCartProduct(id: string, res) {
+        const data = await this.CartModel.aggregate([
+            {
+                $match: {
+                    userId: new mongoose.Types.ObjectId(id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "productId",
+                    foreignField: "_id",
+                    as: "products"
+                }
+            },
+            {
+                $unwind: "$products"
+            },
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "products.categoryId",
+                    foreignField: "_id",
+                    as: "category"
+                }
+            },
+            {
+                $unwind: "$category"
+            },
+            {
+                $project: {
+                    _id: '$products._id',
+                    category_name: '$category.name',
+                    name: '$products.name',
+                    detail: '$products.detail',
+                    price: '$products.price',
+                    image: '$products.image',
+                    publicId: '$products.publicId'
+                }
+            }
+        ])
 
-        return res.status(HttpStatus.OK).json({
-            status: HttpStatus.OK,
-            message: 'Cart Item Collected uccessfully',
-            data: data
-        })
+        if (data != null) {
+            return res.status(HttpStatus.OK).json({
+                status: HttpStatus.OK,
+                message: 'Cart Item Collected successfully',
+                data: data
+            })
+        } else {
+            return res.status(HttpStatus.BAD_REQUEST).json({
+                status: HttpStatus.BAD_REQUEST,
+                message: 'There is nothing in Cart',
+            })
+        }
+    }
+
+    async checkout(res, id: string) {
+        const data = await this.CartModel.aggregate([
+            {
+                $match: {
+                    userId: new mongoose.Types.ObjectId(id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "productId",
+                    foreignField: "_id",
+                    as: "products"
+                }
+            },
+            {
+                $unwind: "$products"
+            },
+            {
+                $group: {
+                    _id: id,
+                    totalProduct: { $sum: 1 },
+                    totalAmount: { $sum: '$products.price' }
+                }
+            }
+        ])
+        if (data != null) {
+            return res.status(HttpStatus.OK).json({
+                status: HttpStatus.OK,
+                message: 'checkout',
+                data: data
+            })
+        } else {
+            return res.status(HttpStatus.BAD_REQUEST).json({
+                status: HttpStatus.BAD_REQUEST,
+                message: 'There is nothing in Cart',
+            })
+        }
+
     }
 }

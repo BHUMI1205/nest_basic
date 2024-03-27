@@ -1,6 +1,6 @@
 import { Controller, HttpStatus, Query, Body, Res, Param, Get, Post, Put, Delete, UseGuards, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { CategoryService } from './category.service';;
-import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody, ApiOperation } from '@nestjs/swagger';
 import { AuthMiddleware } from '../auth/auth.middleware';
 import { RoleAuthMiddleware } from '../auth/role.auth';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -15,6 +15,7 @@ export class CategoryController {
     constructor(private categoryService: CategoryService) { }
 
     @UseGuards(AuthMiddleware, RoleAuthMiddleware)
+    @ApiOperation({ summary: 'Show All Category Details' })
     @Get()
     async getproducts(@Res() response, @Query() filterCategoryDto: filterCategoryDto) {
         return await this.categoryService.getAll(response, filterCategoryDto);
@@ -22,6 +23,7 @@ export class CategoryController {
 
 
     @UseGuards(AuthMiddleware, RoleAuthMiddleware)
+    @ApiOperation({ summary: 'Show Category Details By Id' })
     @Get('/:id')
     async getCategory(@Res() response, @Param('id') Id: string) {
         return await this.categoryService.getCategory(Id, response);
@@ -30,20 +32,9 @@ export class CategoryController {
 
     @UseGuards(AuthMiddleware, RoleAuthMiddleware)
     @Post()
+    @ApiOperation({ summary: 'Add new Category' })
+    @ApiBody({ type: CreateCategoryDto })
     @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                name: { type: 'string' },
-                detail: { type: 'string' },
-                image: {
-                    type: 'string',
-                    format: 'binary',
-                },
-            },
-        },
-    })
     @UseInterceptors(FileInterceptor('image'))
     async create(@Res() response, @Body() createProductDto: CreateCategoryDto, @UploadedFile() imageData: Express.Multer.File) {
         return await this.categoryService.create(createProductDto, imageData.buffer, response);
@@ -52,20 +43,9 @@ export class CategoryController {
 
     @UseGuards(AuthMiddleware, RoleAuthMiddleware)
     @Put('/:id')
+    @ApiOperation({ summary: 'Update Category' })
+    @ApiBody({ type: UpdateCategoryDto, required: false })
     @ApiConsumes('multipart/form-data')
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                name: { type: 'string' },
-                detail: { type: 'string' },
-                image: {
-                    type: 'string',
-                    format: 'binary',
-                },
-            },
-        },
-    })
     @UseInterceptors(FileInterceptor('image'))
     async updateProduct(@Res() response, @Param('id') Id: string,
         @Body() updateCategoryDto: UpdateCategoryDto, @UploadedFile() image: Express.Multer.File) {
@@ -79,6 +59,7 @@ export class CategoryController {
 
 
     @UseGuards(AuthMiddleware, RoleAuthMiddleware)
+    @ApiOperation({ summary: 'Delete Category' })
     @Delete('/:id')
     async deleteCategory(@Res() response, @Param('id') Id: string) {
         return await this.categoryService.deleteCategory(Id, response);

@@ -4,6 +4,7 @@ import { Category } from 'src/category/entity/category.entity';
 
 @Schema()
 export class Product extends Document {
+
    @Prop({ required: true })
    name: string;
 

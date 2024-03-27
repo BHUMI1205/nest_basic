@@ -12,7 +12,10 @@ export class CreateCategoryDto {
   @IsNotEmpty()
   detail: string;
 
- 
+  @IsNotEmpty()
+  @ApiProperty({ format: 'binary' })
+  image: string
+
 }
 
 export class filterCategoryDto {

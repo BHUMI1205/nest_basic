@@ -14,7 +14,7 @@ async function bootstrap() {
 
 
   const config = new DocumentBuilder()
-    .setTitle('Product example')
+    .setTitle('Product Detail')
     .setDescription('The Product API description')
     .setVersion('1.0')
     .addBearerAuth(
@@ -26,9 +26,10 @@ async function bootstrap() {
 
   SwaggerModule.setup('api', app, document);
   app.useGlobalPipes(new ValidationPipe());
-  // app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new HttpExceptionFilter());
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
+  
   app.setViewEngine('hbs');
   await app.listen(3000);
 }

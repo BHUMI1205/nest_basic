@@ -14,7 +14,7 @@ export class RoleAuthMiddleware implements NestMiddleware {
             if (role == "admin") {
                 next();
             } else {
-                return "Authorized error"
+                return res.status(401).json({ message: 'Authorized error' });
             }
 
         } catch (error) {

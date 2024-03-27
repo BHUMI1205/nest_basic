@@ -34,6 +34,7 @@ import { CartController } from './cart/cart.controller';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
-    consumer.apply(AuthMiddleware, RoleAuthMiddleware).forRoutes(CartController, CartController, ProductsController)
+    consumer.apply(AuthMiddleware).forRoutes(CartController, CategoryController, ProductsController)
+    consumer.apply(RoleAuthMiddleware).forRoutes(CategoryController)
   }
 }

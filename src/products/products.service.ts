@@ -59,8 +59,8 @@ export class ProductService {
             image: imageUrl,
             publicId: publicId,
             userId: id
-        });
-
+        })
+        data.save()
 
         return res.status(HttpStatus.OK).json({
             status: HttpStatus.OK,

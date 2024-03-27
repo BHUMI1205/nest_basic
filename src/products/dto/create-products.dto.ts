@@ -8,7 +8,6 @@ export class CreateProductDto {
   @ApiProperty()
   name: string;
 
-  @IsNumber()
   @IsNotEmpty()
   @ApiProperty()
   price: number;
@@ -19,11 +18,10 @@ export class CreateProductDto {
 
   @IsNotEmpty()
   @ApiProperty()
-  categoryId: string;
+  categoryId: string; 
 
-  @IsNotEmpty()
-  @ApiProperty()
-  image: string
+  @ApiProperty({format:'binary'})
+  image: string[]
 
 }
 

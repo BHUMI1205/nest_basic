@@ -6,8 +6,8 @@ export class Cart extends Document {
 
     @Prop({ ref: 'Product' })
     productId: mongoose.Schema.Types.ObjectId
- 
-    @Prop({ ref: 'User' })
+
+    @Prop({ ref: 'User', index: true })
     userId: mongoose.Schema.Types.ObjectId
 
     @Prop({ default: now() })
